@@ -48,10 +48,10 @@ public class PluginChannelManager implements PluginMessageListener {
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!channel.equals("BungeeCord")) { return; }
+        plugin.getLogger().log(Level.INFO, channel);
 
         ByteArrayDataInput in = ByteStreams.newDataInput(message);
         String subchannel = in.readUTF();
-        plugin.getLogger().log(Level.INFO, subchannel);
         String[] components = subchannel.split("::", 2);
         if (components.length == 2) {
             onBungeeMessage(components[0], components[1], in);
@@ -84,6 +84,7 @@ public class PluginChannelManager implements PluginMessageListener {
             case "PlayerList":
                 serverName = in.readUTF();
                 String[] players = in.readUTF().split(", ");
+                if (players[0].length() == 0) { players = new String[0]; }
                 listener.onReceivePlayerList(serverName, players);
                 break;
             case "GetServers":
@@ -113,22 +114,24 @@ public class PluginChannelManager implements PluginMessageListener {
     }
 
     public void onForwardMessage(String subchannel, Player player, ByteArrayDataInput in) {
+        plugin.getLogger().log(Level.INFO, subchannel);
         if (!registeredPlugins.containsKey(subchannel)) { return; }
+        plugin.getLogger().log(Level.INFO, "got here");
         HashMap<String, PluginChannel> pluginChannels = registeredPlugins.get(subchannel);
 
-        Short len = in.readShort();
+        short len = in.readShort();
         byte[] msgbytes = new byte[len];
         in.readFully(msgbytes);
         ByteArrayDataInput msgin = ByteStreams.newDataInput(msgbytes);
 
-        String messageClass = msgin.readUTF();
-        if (!pluginChannels.containsKey(messageClass)) {
-            return;
-        }
-
-        PluginChannel listener = pluginChannels.get(messageClass);
-        Object msg = gson.fromJson(msgin.readUTF(), listener.getMessageClass());
-        listener.onReceiveForward(player, msg);
+        String channelName = msgin.readUTF();
+        plugin.getLogger().log(Level.INFO, channelName);
+        if (!pluginChannels.containsKey(channelName)) { return; }
+        PluginChannel channel = pluginChannels.get(channelName);
+        String serializedMessage = msgin.readUTF();
+        plugin.getLogger().log(Level.INFO, serializedMessage);
+        Object message = gson.fromJson(serializedMessage, channel.getMessageClass());
+        channel.onReceiveForward(player, message);
     }
 
     public void requestConnect(PluginChannel channel, Player player, String server) {
@@ -214,7 +217,14 @@ public class PluginChannelManager implements PluginMessageListener {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("Forward");
         out.writeUTF(server);
-        out.writeUTF(channel.getName());
+        out.writeUTF(channel.getPlugin().getName());
+
+        ByteArrayDataOutput msgout = ByteStreams.newDataOutput();
+        msgout.writeUTF(channel.getName());
+        msgout.writeUTF(gson.toJson(message));
+
+        out.writeShort(msgout.toByteArray().length);
+        out.write(msgout.toByteArray());
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -226,9 +236,7 @@ public class PluginChannelManager implements PluginMessageListener {
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
-    public void requestUUID(PluginChannel channel) {
-        Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
-        if (player == null) { return; }
+    public void requestUUID(PluginChannel channel, Player player) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         String requestId = UUID.randomUUID().toString();
         requestTracker.put(requestId, channel);
@@ -243,6 +251,7 @@ public class PluginChannelManager implements PluginMessageListener {
         String requestId = UUID.randomUUID().toString();
         requestTracker.put(requestId, channel);
         out.writeUTF("UUIDOther::" + requestId);
+        out.writeUTF(playerName);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -253,6 +262,7 @@ public class PluginChannelManager implements PluginMessageListener {
         String requestId = UUID.randomUUID().toString();
         requestTracker.put(requestId, channel);
         out.writeUTF("ServerIP::" + requestId);
+        out.writeUTF(server);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 

@@ -64,7 +64,7 @@ public class PluginChannel {
     public void requestGetServer() { manager.requestGetServer(this); }
     public void requestForward(String server, Object message) { manager.requestForward(this, server, message); }
     public void requestForwardToPlayer(String playerName, Object message) { manager.requestForwardToPlayer(this, playerName, message); }
-    public void requestUUID() { manager.requestUUID(this); }
+    public void requestUUID(Player player) { manager.requestUUID(this, player); }
     public void requestUUIDOther(String playerName) { manager.requestUUIDOther(this, playerName); }
     public void requestServerIP(String server) { manager.requestServerIP(this, server); }
     public void requestKickPlayer(String playerName, String reason) { manager.requestKickPlayer(this, playerName, reason); }
