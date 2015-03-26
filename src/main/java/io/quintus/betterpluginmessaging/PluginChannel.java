@@ -56,7 +56,7 @@ public class PluginChannel {
 
     public void requestConnect(Player player, String server) { manager.requestConnect(this, player, server); }
     public void requestConnectOther(String playerName, String server) { manager.requestConnectOther(this, playerName, server); }
-    public void requestIP(String server) { manager.requestIP(this, server); }
+    public void requestIP(Player player) { manager.requestIP(this, player); }
     public void requestPlayerCount(String server) { manager.requestPlayerCount(this, server); }
     public void requestPlayerList(String server) { manager.requestPlayerList(this, server); }
     public void requestGetServers() { manager.requestGetServers(this); }

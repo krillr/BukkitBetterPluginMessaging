@@ -11,6 +11,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class PluginChannelManager implements PluginMessageListener {
 
@@ -33,7 +34,7 @@ public class PluginChannelManager implements PluginMessageListener {
         if (registeredPlugins.containsKey(plugin.getName())) {
             channelMap = registeredPlugins.get(plugin.getName());
         } else {
-            channelMap = new HashMap<String, PluginChannel>();
+            channelMap = new HashMap<>();
             registeredPlugins.put(plugin.getName(), channelMap);
         }
 
@@ -50,6 +51,7 @@ public class PluginChannelManager implements PluginMessageListener {
 
         ByteArrayDataInput in = ByteStreams.newDataInput(message);
         String subchannel = in.readUTF();
+        plugin.getLogger().log(Level.INFO, subchannel);
         String[] components = subchannel.split("::", 2);
         if (components.length == 2) {
             onBungeeMessage(components[0], components[1], in);
@@ -146,11 +148,11 @@ public class PluginChannelManager implements PluginMessageListener {
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
-    public void requestIP(PluginChannel channel, String server) {
-        Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
-        if (player == null) { return; }
+    public void requestIP(PluginChannel channel, Player player) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("IP");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("IP::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -158,7 +160,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("PlayerCount");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("PlayerCount::" + requestId);
         out.writeUTF(server);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
@@ -178,7 +182,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("GetServers");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("GetServers::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -196,7 +202,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("GetServer");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("GetServer::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -207,7 +215,6 @@ public class PluginChannelManager implements PluginMessageListener {
         out.writeUTF("Forward");
         out.writeUTF(server);
         out.writeUTF(channel.getName());
-
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -223,7 +230,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("UUID");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("UUID::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -231,7 +240,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("UUIDOther");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("UUIDOther::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
@@ -239,7 +250,9 @@ public class PluginChannelManager implements PluginMessageListener {
         Player player = Iterables.getFirst(plugin.getServer().getOnlinePlayers(), null);
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("ServerIP");
+        String requestId = UUID.randomUUID().toString();
+        requestTracker.put(requestId, channel);
+        out.writeUTF("ServerIP::" + requestId);
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
