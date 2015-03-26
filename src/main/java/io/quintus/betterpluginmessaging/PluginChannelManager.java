@@ -233,6 +233,15 @@ public class PluginChannelManager implements PluginMessageListener {
         if (player == null) { return; }
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("ForwardToPlayer");
+        out.writeUTF(playerName);
+        out.writeUTF(channel.getPlugin().getName());
+
+        ByteArrayDataOutput msgout = ByteStreams.newDataOutput();
+        msgout.writeUTF(channel.getName());
+        msgout.writeUTF(gson.toJson(message));
+
+        out.writeShort(msgout.toByteArray().length);
+        out.write(msgout.toByteArray());
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
